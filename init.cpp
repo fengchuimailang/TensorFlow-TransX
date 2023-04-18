@@ -11,8 +11,9 @@ using namespace std;
 string inPath = "./data/";
 int bernFlag = 0;
 
-extern "C"
+extern "C" //extern 用来生命外部变量
 void setInPath(char *path, int len) {
+    /* 用来拼接 path */
     inPath = "";
     printf("init path...\n");
     for (int i = 0; i < len; i++){
@@ -24,56 +25,58 @@ int *lefHead, *rigHead;
 int *lefTail, *rigTail;
 
 struct Triple {
-	int h, r, t;
+	int h, r, t; // 头 关系 尾
 };
 
 struct cmp_head {
+    // 判断 字典序是不是 顺序的 从头到尾
 	bool operator()(const Triple &a, const Triple &b) {
 		return (a.h < b.h)||(a.h == b.h && a.r < b.r)||(a.h == b.h && a.r == b.r && a.t < b.t);
 	}
 };
 
 struct cmp_tail {
+    // 从尾到头判断 顺序是否满足
 	bool operator()(const Triple &a, const Triple &b) {
 		return (a.t < b.t)||(a.t == b.t && a.r < b.r)||(a.t == b.t && a.r == b.r && a.h < b.h);
 	}
 };
 
 struct cmp_list {
-	int minimal(int a,int b) {
+	int minimal(int a,int b) {  //选出头尾最小的
 		if (a > b) return b;
 		return a;
 	}
-	bool operator()(const Triple &a, const Triple &b) {
+	bool operator()(const Triple &a, const Triple &b) {  // 头尾最小 作为比较项 进行比较
 		return (minimal(a.h, a.t) > minimal(b.h, b.t));
 	}
 };
 
-Triple *trainHead, *trainTail, *trainList;
+Triple *trainHead, *trainTail, *trainList;   // Triple 三元组抽象数据类型
 int relationTotal, entityTotal, tripleTotal;
 int *freqRel, *freqEnt;
 float *left_mean, *right_mean;
 
-extern "C"
+extern "C"   //extern 用来生命外部变量
 void init() {
 
 	FILE *fin;
 	int tmp;
 
 	fin = fopen((inPath + "relation2id.txt").c_str(), "r");
-	tmp = fscanf(fin, "%d", &relationTotal);
+	tmp = fscanf(fin, "%d", &relationTotal); // 第一行写的就是关系数量
 	fclose(fin);
 
-	freqRel = (int *)calloc(relationTotal, sizeof(int));
+	freqRel = (int *)calloc(relationTotal, sizeof(int)); //在内存的动态存储区中分配num个长度为size的连续空间，函数返回一个指向分配起始地址的指针；如果分配不成功，返回NULL。
 	
 	fin = fopen((inPath + "entity2id.txt").c_str(), "r");
-	tmp = fscanf(fin, "%d", &entityTotal);
+	tmp = fscanf(fin, "%d", &entityTotal); //第一行就是实体数量
 	fclose(fin);
 
 	freqEnt = (int *)calloc(entityTotal, sizeof(int));
 	
 	fin = fopen((inPath + "train2id.txt").c_str(), "r");
-	tmp = fscanf(fin, "%d", &tripleTotal);
+	tmp = fscanf(fin, "%d", &tripleTotal); // 获取三元组总数
 	trainHead = (Triple *)calloc(tripleTotal, sizeof(Triple));
 	trainTail = (Triple *)calloc(tripleTotal, sizeof(Triple));
 	trainList = (Triple *)calloc(tripleTotal, sizeof(Triple));
@@ -94,14 +97,14 @@ void init() {
 	}
 	fclose(fin);
 
-	sort(trainHead, trainHead + tripleTotal, cmp_head());
+	sort(trainHead, trainHead + tripleTotal, cmp_head());  // 排序
 	sort(trainTail, trainTail + tripleTotal, cmp_tail());
 
 	lefHead = (int *)calloc(entityTotal, sizeof(int));
 	rigHead = (int *)calloc(entityTotal, sizeof(int));
 	lefTail = (int *)calloc(entityTotal, sizeof(int));
 	rigTail = (int *)calloc(entityTotal, sizeof(int));
-	memset(rigHead, -1, sizeof(rigHead));
+	memset(rigHead, -1, sizeof(rigHead)); //memset是计算机中C/C++语言初始化函数。作用是将某一块内存中的内容全部设置为指定的值
 	memset(rigTail, -1, sizeof(rigTail));
 	for (int i = 1; i < tripleTotal; i++) {
 		if (trainTail[i].t != trainTail[i - 1].t) {
@@ -160,11 +163,13 @@ void setBernFlag(int flag = 0) {
 unsigned long long next_random = 3;
 
 unsigned long long randd(int id) {
+    // 假随机一个数
 	next_random = next_random * (unsigned long long)25214903917 + 11;
 	return next_random;
 }
 
 int rand_max(int id, int x) {
+    // 生成 0 到 x-1的随机数
 	int res = randd(id) % x;
 	while (res<0)
 		res+=x;
